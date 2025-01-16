@@ -1,0 +1,27 @@
+-- Pivot table data for a list of columns provided as variables
+
+{% set metrics = ['total_taxes', 'profit', 'cost'] %}
+
+SELECT *
+FROM (
+  SELECT region, metric, value
+  FROM tax_metrics
+) s
+PIVOT (
+  SUM(value) FOR metric IN (
+    {% for metric in metrics %}
+      '{{ metric }}' AS {{ metric }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  )
+) p;
+
+
+-- simplified description example
+-- Converts tax_month values into columns, displaying taxes for each month
+/*
+SELECT *
+FROM (SELECT region, tax_month, total_tax FROM tax) t
+PIVOT (
+  SUM(total_tax) FOR tax_month IN ('Jan', 'Feb', 'Mar')
+) p;
+*/
