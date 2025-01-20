@@ -65,7 +65,19 @@ The Level column indicates the depth of the employee in the hierarchy, starting 
 Departmental Integration:
 
 Joins the Departments table to enrich the data with department and regional information.
-Ordering:
 
 Orders results by HierarchyPath to ensure proper hierarchical visualization.
+
+Null Handling for Managers:
+
+Ensures that top-level managers (ManagerID IS NULL) are handled correctly.
+Dynamic Path Construction:
+
+Creates a clear hierarchical path using CONCAT and tracks reporting chains.
+Depth Calculation:
+
+Calculates Level dynamically, showing each employee’s depth in the hierarchy.
+Recursive Joins:
+
+ joins with the Departments table for enriched data without performance bottlenecks.
 */
