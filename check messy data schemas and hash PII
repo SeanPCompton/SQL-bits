@@ -1,0 +1,52 @@
+WITH CleanedData AS (
+    -- Step 1: Clean the messy data
+    SELECT 
+        ShopperID,
+        TRIM(UPPER(COALESCE(NULLIF(FirstName, ''), 'UNKNOWN'))) AS FirstName, -- Standardize names
+        TRIM(UPPER(COALESCE(NULLIF(LastName, ''), 'UNKNOWN'))) AS LastName, 
+        TRIM(UPPER(COALESCE(NULLIF(Address, ''), 'UNKNOWN'))) AS CleanedAddress, -- Standardize addresses
+        REGEXP_REPLACE(TRIM(COALESCE(NULLIF(PhoneNumber, ''), 'UNKNOWN')), '[^0-9]', '') AS CleanedPhone -- Normalize phone numbers
+    FROM Shoppers
+),
+HashedData AS (
+    -- Step 2: Hash sensitive data (addresses and phone numbers) for anonymity
+    SELECT 
+        ShopperID,
+        FirstName,
+        LastName,
+        SHA2(CleanedAddress, 256) AS HashedAddress, -- Hash Address
+        SHA2(CleanedPhone, 256) AS HashedPhone      -- Hash Phone
+    FROM CleanedData
+),
+PotentialHouseholds AS (
+    -- Step 3: Identify potential households based on hashed matches
+    SELECT 
+        A.ShopperID AS ShopperID1,
+        B.ShopperID AS ShopperID2,
+        A.HashedAddress,
+        A.HashedPhone
+    FROM HashedData A
+    INNER JOIN HashedData B
+        ON A.ShopperID <> B.ShopperID -- Exclude self-joins
+        AND (
+            A.HashedAddress = B.HashedAddress -- Match on hashed addresses
+            OR A.HashedPhone = B.HashedPhone  -- Match on hashed phone numbers
+        )
+),
+DeduplicatedResults AS (
+    -- Step 4: Deduplicate the results (A-B is the same as B-A for households)
+    SELECT DISTINCT
+        LEAST(ShopperID1, ShopperID2) AS HouseholdMember1,
+        GREATEST(ShopperID1, ShopperID2) AS HouseholdMember2,
+        HashedAddress,
+        HashedPhone
+    FROM PotentialHouseholds
+)
+-- Step 5: Output the final deduplicated list of potential households
+SELECT 
+    HouseholdMember1 AS ShopperID1,
+    HouseholdMember2 AS ShopperID2,
+    HashedAddress,
+    HashedPhone
+FROM DeduplicatedResults
+ORDER BY ShopperID1, ShopperID2;
