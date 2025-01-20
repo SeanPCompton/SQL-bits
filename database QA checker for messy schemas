@@ -1,0 +1,70 @@
+WITH 
+-- CTE for identifying duplicates
+DuplicateCTE AS (
+    SELECT column1, column2, column3, COUNT(*) AS duplicate_count
+    FROM imported_data
+    GROUP BY column1, column2, column3
+    HAVING COUNT(*) > 1
+),
+-- CTE for checking null values and values containing only blank spaces
+NullOrBlankValuesCTE AS (
+    SELECT COUNT(*) AS null_or_blank_count
+    FROM imported_data
+    WHERE TRIM(COALESCE(column1, '')) = ''  -- Check for NULL or blank spaces in column1
+       OR TRIM(COALESCE(column2, '')) = ''  -- Check for NULL or blank spaces in column2
+       OR TRIM(COALESCE(column3, '')) = ''  -- Check for NULL or blank spaces in column3
+),
+-- CTE for identifying singleton records (unique rows)
+SingletonCTE AS (
+    SELECT column1, COUNT(*) AS singleton_count
+    FROM imported_data
+    GROUP BY column1
+    HAVING COUNT(*) = 1
+),
+-- CTE for primary key issues (null or duplicates)
+PrimaryKeyIssuesCTE AS (
+    SELECT
+        'NULL Primary Key' AS issue_type,
+        COUNT(*) AS null_primary_key_count
+    FROM imported_data
+    WHERE primary_key_column IS NULL
+
+    UNION ALL
+
+    SELECT
+        'Duplicate Primary Key' AS issue_type,
+        COUNT(*) AS duplicate_primary_key_count
+    FROM imported_data
+    WHERE primary_key_column IN (
+        SELECT primary_key_column
+        FROM imported_data
+        GROUP BY primary_key_column
+        HAVING COUNT(*) > 1
+    )
+)
+-- Consolidated summary report combining all checks
+SELECT 
+    'Duplicate Rows' AS issue_type,
+    COUNT(*) AS issue_count
+FROM DuplicateCTE
+
+UNION ALL
+
+SELECT 
+    'Null or Blank Values' AS issue_type,
+    null_or_blank_count AS issue_count
+FROM NullOrBlankValuesCTE
+
+UNION ALL
+
+SELECT 
+    'Singleton Records' AS issue_type,
+    COUNT(*) AS issue_count
+FROM SingletonCTE
+
+UNION ALL
+
+SELECT 
+    issue_type,
+    null_primary_key_count AS issue_count
+FROM PrimaryKeyIssuesCTE;
