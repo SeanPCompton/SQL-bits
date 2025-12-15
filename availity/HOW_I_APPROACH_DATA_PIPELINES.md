@@ -1,4 +1,4 @@
-# How I Approach Data Pipelines
+# How I Approach Data Pipelines 
 
 This folder is a small set of examples, but the bigger point is how I think about building data systems that don’t fall apart as tenants, volume, and requirements grow.
 
