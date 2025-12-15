@@ -11,7 +11,7 @@ At a high level, I try to:
 - Push reshaping and opinionated logic to the edges where users actually need it
 - Make pipelines repeatable before making them fast
 - Prefer configuration over forking when behavior needs to vary by customer or tenant
-- Treat data scientists and analysts as customers of the platform
+- Treat ds and analysts as full paying customers of the platform
 
 Practically, this usually means:
 
@@ -22,5 +22,5 @@ Practically, this usually means:
 - Temporary workarounds that are clearly scoped and easy to remove once product solutions exist
 
 I don’t assume perfect inputs or perfect requirements.
-I assume systems will change, customers will grow, and edge cases will appear.
+I assume systems will change, customers will grow, and edge cases will appear..edge cases can become future priorities or emerging strategies
 The goal is to make those changes safe and unsurprising.
