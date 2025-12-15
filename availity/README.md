@@ -1,7 +1,7 @@
 # SQL Examples for Availity
 
 This folder contains a small, curated set of SQL examples. They reflect how I approach
-day-to-day data engineering work: messy source data, downstream consumers,
+day-to-day data engineering work: semi-structured source data, downstream consumers,
 governance constraints, and systems that are still evolving. I use many other
 languages and technologies on a daily basis and can help share those examples further if
 helpful or desired. (including even a Cobol script I wrote in 1999...)
