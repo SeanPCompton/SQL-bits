@@ -10,6 +10,9 @@ These aren’t academic exercises or LeetCode-style problems. Each is one of man
 self-contained examples of a pattern I’ve used in production or consulting
 contexts, with comments focused on intent, tradeoffs, and operational reality.
 
+- SQL is intentionally generic; minor syntax tweaks may be needed per platform.
+- Comments explain *why* decisions were made, not just what the query does.
+- Examples are scoped on purpose rather than exhaustive.
 
 ## Examples
 
@@ -76,7 +79,4 @@ All previous clients and employers used multiple cloud environments thus I am ve
 switching amongst them quickly, projecting future needs, and leveraging typical tools such as Databricks/Snowflake. I have 
 additional code examples for those I may be able to source and share as well if helpful.
 
-- SQL is intentionally generic; minor syntax tweaks may be needed per platform.
-- Comments explain *why* decisions were made, not just what the query does.
-- Examples are scoped on purpose rather than exhaustive.
 
