@@ -56,3 +56,26 @@ I don’t assume perfect inputs or perfect requirements.
 I assume systems will change, customers will grow, and edge cases will appear..edge cases can become future priorities or emerging strategies
 The goal is to make those changes safe and unsurprising.
 
+## Documentation, Governance, and Repeatability
+
+I treat documentation, governance, and repeatability as part of the engineering work itself, not as optional follow-ups.
+
+In practice, that means:
+
+- **Documentation as an interface.**  
+  Clear descriptions of grain, keys, aggregation rules, and data freshness are how downstream users build trust in a dataset. If a table is customer-facing or model-facing, its assumptions should be explicit and discoverable.
+
+- **Governance by design, not ceremony.**  
+  Tenant isolation, aggregation rights, and PII handling are encoded directly into schemas, paths, views, and access controls — not left to convention or tribal knowledge.
+
+- **Repeatability over cleverness.**  
+  Pipelines should be easy to reason about, easy to re-run, and easy to extend. I aim for patterns where onboarding a new tenant or source is mostly configuration, not new code.
+
+- **Operational readiness.**  
+  Before something is “done,” I want to know:  
+  *Who owns it? What breaks if it fails? How do we detect issues quickly? How do we recover without data loss or surprises?*
+
+These habits come from working on systems that grew faster than their original assumptions.  
+My goal is to help teams scale without losing trust in their data — especially in environments where correctness, privacy, and auditability matter.
+
+
