@@ -1,27 +1,41 @@
--- Pivot table data for a list of columns provided as variables
+/* Pivot table data for a list of columns provided as variables
+ Converts tax_month values into columns, displaying taxes chosen for each month 
+ Example Jinja inclusion which is generally used for dynamic sql inclusion
 
-{% set metrics = ['total_taxes', 'profit', 'cost'] %}
+Client- facing which is why pivot became a practical use case to aid data migration team
+Live consulting w MGM, Wyndham, Nordstrom 
+*/
+
+{# rare hotel-related tax example: Tourism Improvement District (TID) assessment #}
+{% set hotel_tax_type = 'tourism_improvement_district_assessment' %}
+
+{# Columns we want to generate dynamically (months become columns) #}
+{% set metrics = ['2025-01', '2025-02', '2025-03'] %}
 
 SELECT *
 FROM (
-  SELECT region, metric, value
+  SELECT
+    region
+    ,tax_month
+    ,value
   FROM tax_metrics
+  WHERE tax_type = '{{ hotel_tax_type }}'
 ) s
 PIVOT (
-  SUM(value) FOR metric IN (
-    {% for metric in metrics %}
-      '{{ metric }}' AS {{ metric }}{% if not loop.last %}, {% endif %}
+  SUM(value) FOR tax_month IN (
+    {% for m in metrics %}
+      '{{ m }}' AS tax_{{ m | replace('-', '_') }}{% if not loop.last %}, {% endif %}
     {% endfor %}
   )
 ) p;
 
+-- Pivot should always have 3 components
+  -- Group by dimension, region
+  -- Pivot key (which become columns), month
+  -- Agg function
 
--- simplified description example
--- Converts tax_month values into columns, displaying taxes for each month
-/*
-SELECT *
-FROM (SELECT region, tax_month, total_tax FROM tax) t
-PIVOT (
-  SUM(total_tax) FOR tax_month IN ('Jan', 'Feb', 'Mar')
-) p;
-*/
+-- rarely used for things like core fact tables but great for making math easy where row based data would complicate, downstream reporting etc
+  -- keep tall upstream (core data normalized for flexibility and correctness), pivot at edge and parameterize
+
+-- retain this to help upskill junior analysts and onboard new project resources, rep -> git
+-- 3/2023
