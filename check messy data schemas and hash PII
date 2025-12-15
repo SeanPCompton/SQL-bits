@@ -1,52 +1,105 @@
-WITH CleanedData AS (
-    -- Step 1: Clean the messy data
-    SELECT 
-        ShopperID,
-        TRIM(UPPER(COALESCE(NULLIF(FirstName, ''), 'UNKNOWN'))) AS FirstName, -- Standardize names
-        TRIM(UPPER(COALESCE(NULLIF(LastName, ''), 'UNKNOWN'))) AS LastName, 
-        TRIM(UPPER(COALESCE(NULLIF(Address, ''), 'UNKNOWN'))) AS CleanedAddress, -- Standardize addresses
-        REGEXP_REPLACE(TRIM(COALESCE(NULLIF(PhoneNumber, ''), 'UNKNOWN')), '[^0-9]', '') AS CleanedPhone -- Normalize phone numbers
-    FROM Shoppers
+/* Data quality quick-checks for newly imported / landing data
+
+   Purpose:
+   - Fast profile of common ingest issues (duplicates, null/blank required fields, PK integrity).
+   - Intended for staging/landing validation before promoting data downstream.
+
+   Governance notes:
+   - Returns counts only (no raw values), which reduces exposure risk if sensitive columns exist.
+   - In practice, align checks with a documented data contract (PK, required fields, grain).
+   - Persist results to a QA log table for auditability and trend tracking.
+*/
+
+WITH
+duplicate_rows AS (
+    /* Duplicate detection across a representative natural key.
+       Replace column1/2/3 with the dataset’s true uniqueness contract. */
+    SELECT
+          column1
+        , column2
+        , column3
+        , COUNT(*) AS duplicate_count
+    FROM imported_data
+    GROUP BY
+          column1
+        , column2
+        , column3
+    HAVING COUNT(*) > 1
 ),
-HashedData AS (
-    -- Step 2: Hash sensitive data (addresses and phone numbers) for anonymity
-    SELECT 
-        ShopperID,
-        FirstName,
-        LastName,
-        SHA2(CleanedAddress, 256) AS HashedAddress, -- Hash Address
-        SHA2(CleanedPhone, 256) AS HashedPhone      -- Hash Phone
-    FROM CleanedData
+
+null_or_blank_values AS (
+    /* Required-field completeness check (NULL or whitespace-only).
+       TRIM(COALESCE(x,'')) = '' treats NULL and blanks consistently. */
+    SELECT
+          COUNT(*) AS null_or_blank_count
+    FROM imported_data
+    WHERE TRIM(COALESCE(column1, '')) = ''
+       OR TRIM(COALESCE(column2, '')) = ''
+       OR TRIM(COALESCE(column3, '')) = ''
 ),
-PotentialHouseholds AS (
-    -- Step 3: Identify potential households based on hashed matches
-    SELECT 
-        A.ShopperID AS ShopperID1,
-        B.ShopperID AS ShopperID2,
-        A.HashedAddress,
-        A.HashedPhone
-    FROM HashedData A
-    INNER JOIN HashedData B
-        ON A.ShopperID <> B.ShopperID -- Exclude self-joins
-        AND (
-            A.HashedAddress = B.HashedAddress -- Match on hashed addresses
-            OR A.HashedPhone = B.HashedPhone  -- Match on hashed phone numbers
-        )
+
+singleton_records AS (
+    /* Informational: counts IDs that appear exactly once.
+       Useful for spotting unexpected sparsity or verifying uniqueness behavior. */
+    SELECT
+          column1
+        , COUNT(*) AS singleton_count
+    FROM imported_data
+    GROUP BY
+          column1
+    HAVING COUNT(*) = 1
 ),
-DeduplicatedResults AS (
-    -- Step 4: Deduplicate the results (A-B is the same as B-A for households)
-    SELECT DISTINCT
-        LEAST(ShopperID1, ShopperID2) AS HouseholdMember1,
-        GREATEST(ShopperID1, ShopperID2) AS HouseholdMember2,
-        HashedAddress,
-        HashedPhone
-    FROM PotentialHouseholds
+
+primary_key_issues AS (
+    /* Primary key integrity checks:
+       - NULL PK values
+       - Duplicate PK values */
+    SELECT
+          'NULL Primary Key' AS issue_type
+        , COUNT(*)           AS issue_count
+    FROM imported_data
+    WHERE primary_key_column IS NULL
+
+    UNION ALL
+
+    SELECT
+          'Duplicate Primary Key' AS issue_type
+        , COUNT(*)                AS issue_count
+    FROM imported_data
+    WHERE primary_key_column IN (
+        SELECT
+              primary_key_column
+        FROM imported_data
+        GROUP BY
+              primary_key_column
+        HAVING COUNT(*) > 1
+    )
 )
--- Step 5: Output the final deduplicated list of potential households
-SELECT 
-    HouseholdMember1 AS ShopperID1,
-    HouseholdMember2 AS ShopperID2,
-    HashedAddress,
-    HashedPhone
-FROM DeduplicatedResults
-ORDER BY ShopperID1, ShopperID2;
+
+-- Consolidated summary report
+SELECT
+      'Duplicate Rows' AS issue_type
+    , COUNT(*)         AS issue_count
+FROM duplicate_rows
+
+UNION ALL
+
+SELECT
+      'Null or Blank Values' AS issue_type
+    , null_or_blank_count    AS issue_count
+FROM null_or_blank_values
+
+UNION ALL
+
+SELECT
+      'Singleton Records' AS issue_type
+    , COUNT(*)            AS issue_count
+FROM singleton_records
+
+UNION ALL
+
+SELECT
+      issue_type
+    , issue_count
+FROM primary_key_issues
+;
