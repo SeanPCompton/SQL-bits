@@ -1,13 +1,20 @@
-# SQL Examples (Availity)
+# SQL Examples for Availity
 
-This folder contains a small, curated set of SQL examples shared for the
-Availity interview process. They reflect how I approach
+This folder contains a small, curated set of SQL examples. They reflect how I approach
 day-to-day data engineering work: messy source data, downstream consumers,
-governance constraints, and systems that are still evolving.
+governance constraints, and systems that are still evolving. I use many other
+languages and technologies on a daily basis and can help share those examples further if
+helpful or desired. (including even a Cobol script I wrote in 1999...)
 
 These aren’t academic exercises or LeetCode-style problems. Each file is a
 self-contained example of a pattern I’ve used in production or consulting
 contexts, with comments focused on intent, tradeoffs, and operational reality.
+Most of my work has naturally be proprietary client work or specific to my employer but I've
+kept well used favorites in my Git respositories as I have often used them to onboard new
+team members or to repeat familiar work.
+
+Often my work would expose me directly to customers in addition to working as a platform engineer 
+thus I've been exposed to a wide spectrum of use cases and customizations. 
 
 ## Examples
 
